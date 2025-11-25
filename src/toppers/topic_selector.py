@@ -144,7 +144,7 @@ class TopicSelector:
         # Initialize Gemini
         if self.gemini_api_key:
             genai.configure(api_key=self.gemini_api_key)
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
         else:
             logger.warning("GEMINI_API_KEY not set, using fallback topic generation")
             self.model = None
