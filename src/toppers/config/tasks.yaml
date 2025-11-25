@@ -93,52 +93,47 @@ create_script:
 
 generate_image_prompts:
   description: >
-    Create detailed AI image generation prompts for each of the 10 items in: "{topic}"
+    Create SHORT, SIMPLE, REALISTIC image prompts for each of the 10 items in: "{topic}"
 
-    For EACH item, generate a prompt that will produce a stunning, professional visual.
-
-    Prompt Structure:
-    [Main Subject], [Style/Aesthetic], [Composition], [Lighting], [Mood/Atmosphere], [Technical specs]
-
-    Guidelines:
-    1. MAIN SUBJECT: Clearly describe the item with specific visual details
-    2. STYLE: Choose artistic style (photorealistic, cinematic, artistic, illustrated, etc.)
-    3. COMPOSITION: Describe framing (close-up, wide shot, aerial view, etc.)
-    4. LIGHTING: Specify lighting (golden hour, dramatic, soft, studio, natural)
-    5. MOOD: Set emotional tone (majestic, serene, vibrant, mysterious, elegant)
-    6. TECHNICAL: Add quality tags (8K, ultra detailed, professional photography, award-winning)
-
-    Image Requirements:
-    - Portrait orientation (9:16 ratio for YouTube Shorts)
-    - Visually striking and attention-grabbing
-    - Clear focal point, not cluttered
-    - Appropriate for all audiences
-    - Consistent visual theme across all 10 images
+    CRITICAL RULES:
+    1. Keep prompts SHORT (maximum 10-15 words)
+    2. Focus ONLY on the specific item name - nothing else
+    3. Use ONLY the item name plus basic context
+    4. NO artistic style words (cinematic, majestic, breathtaking, etc.)
+    5. NO technical terms (8K, ultra detailed, award-winning, etc.)
+    6. NO mood/atmosphere descriptions
+    7. Just describe what should be photographed simply and directly
 
     Research Data:
     {research_data}
 
-    Example Prompt:
-    "Majestic waterfall cascading through lush rainforest, cinematic photography, wide landscape shot,
-    golden hour lighting filtering through mist, serene and breathtaking atmosphere, ultra detailed,
-    8K resolution, professional nature photography, National Geographic style"
+    GOOD Examples:
+    - "Eiffel Tower in Paris during daytime"
+    - "Golden Gate Bridge with San Francisco skyline"
+    - "Mount Everest snow-covered peak"
+    - "Venice canal with gondolas"
+    - "Great Barrier Reef underwater coral"
+
+    BAD Examples (too long/artistic):
+    - "Majestic Eiffel Tower bathed in golden sunset light, cinematic photography, 8K resolution"
+    - "Stunning aerial view of Golden Gate Bridge with dramatic clouds, National Geographic style"
 
     Output Format:
     {{
-      "theme": "Overall visual theme/style for the video",
+      "theme": "realistic photography",
       "prompts": [
         {{
           "rank": 1,
           "name": "Item Name",
-          "prompt": "Complete detailed prompt for AI image generation",
-          "style_notes": "Brief explanation of visual choices"
+          "prompt": "Short simple description of the item (max 15 words)",
+          "style_notes": "realistic photograph"
         }},
         ... (for all 10 items)
       ]
     }}
 
-    IMPORTANT: Return ONLY valid JSON, no additional text.
+    IMPORTANT: Keep prompts SHORT and SIMPLE. Return ONLY valid JSON, no additional text.
   expected_output: >
-    A valid JSON object with detailed image generation prompts for all 10 items,
-    plus overall theme guidance for visual consistency.
+    A valid JSON object with SHORT, SIMPLE, REALISTIC image prompts for all 10 items.
+    Each prompt should be maximum 10-15 words focusing only on the item itself.
   agent: visual_designer

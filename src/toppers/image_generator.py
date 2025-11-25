@@ -81,9 +81,9 @@ class ImageGenerator:
     def _generate_dalle(self, prompt: str, output_path: Path) -> Path:
         """Generate image using DALL-E 3"""
         try:
-            # Enhance prompt for realistic photographic style
-            # Use very explicit instructions for real-world photography
-            enhanced_prompt = f"A real photograph taken with a professional camera showing {prompt}. This is NOT an illustration, NOT digital art, NOT a painting. This is an actual photograph of a real scene with natural lighting, realistic details, and photographic depth of field. Documentary photography style, National Geographic quality."
+            # Keep prompt simple and short for realistic results
+            # Just add minimal realistic photography instruction
+            enhanced_prompt = f"A photograph of {prompt}"
 
             response = self.client.images.generate(
                 model="dall-e-3",
