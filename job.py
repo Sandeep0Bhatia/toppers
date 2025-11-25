@@ -92,10 +92,24 @@ class ToppersPipeline:
             logger.info("\n[STEP 4] Creating video...")
             video_path = self.videos_dir / f"toppers_{timestamp}.mp4"
 
+            # Prepare script for narration
+            script_data = content.get("script", {})
+            full_script = ""
+            if "hook" in script_data:
+                full_script += f"{script_data['hook']} "
+
+            items_script = script_data.get("items_script", [])
+            for item in items_script:
+                full_script += f"Number {item['rank']}: {item['name']}. {item['script']} "
+
+            if "cta" in script_data:
+                full_script += f"{script_data['cta']}"
+
             self.video_generator.create_video_from_images(
                 images=images,
                 title=topic,
-                output_path=video_path
+                output_path=video_path,
+                script=full_script if full_script else None
             )
             logger.info(f"✓ Video created: {video_path}")
 
