@@ -100,7 +100,9 @@ class ToppersPipeline:
 
             items_script = script_data.get("items_script", [])
             for item in items_script:
-                full_script += f"Number {item['rank']}: {item['name']}. {item['script']} "
+                # Handle both 'script' and 'narration' keys from researcher
+                narration = item.get('script') or item.get('narration', '')
+                full_script += f"Number {item['rank']}: {item['name']}. {narration} "
 
             if "cta" in script_data:
                 full_script += f"{script_data['cta']}"
