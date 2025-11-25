@@ -1,5 +1,6 @@
 """
 Video Generator - Creates videos from HTML slides with audio narration
+Based on tickr implementation for consistency
 """
 import os
 import re
@@ -7,219 +8,259 @@ import logging
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
+from datetime import datetime
 from google.cloud import texttospeech
 from playwright.sync_api import sync_playwright
-from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip
+import html
+
+try:
+    # MoviePy 2.x
+    from moviepy import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip
+except ImportError:
+    # MoviePy 1.x fallback
+    from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip
 
 logger = logging.getLogger(__name__)
 
 
 class SlideDesign:
-    """Design constants for slides"""
-    WIDTH = 1080
+    """Design constants for Top 10 slides"""
+    WIDTH = 1080   # 9:16 for YouTube Shorts
     HEIGHT = 1920
+    PADDING = 80
 
-    # Colors
-    BG_PRIMARY = "#0A0E27"
-    BG_SECONDARY = "#1A1E3F"
-    TEXT_PRIMARY = "#FFFFFF"
-    TEXT_SECONDARY = "#B8B9C5"
-    ACCENT_COLOR = "#FF4500"  # Orange-red for rank badges
-    GOLD = "#FFD700"
-
-    # Fonts
-    FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    # Color palette
+    COLORS = {
+        "white": "#FFFFFF",
+        "black": "#000000",
+        "primary": "#FF4500",    # Orange-red
+        "secondary": "#FFD700",  # Gold
+        "bg_dark": "#0A0E27",
+        "bg_light": "#1A1E3F",
+        "text_light": "#B8B9C5",
+    }
 
 
 class TopTenSlide:
-    """Generates HTML slides for Top 10 content"""
+    """Generates HTML slides for Top 10 content using Playwright"""
 
-    def __init__(self):
-        self.design = SlideDesign()
+    def __init__(self, design: SlideDesign = None):
+        self.design = design or SlideDesign()
 
     def create_title_slide(self, topic: str) -> str:
-        """Create opening title slide HTML"""
-        return f"""
+        """Generate title slide HTML and return path to screenshot"""
+        clean_topic = html.escape(self._clean_text(topic))
+
+        html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <style>
                 body {{
                     margin: 0;
                     padding: 0;
                     width: {self.design.WIDTH}px;
                     height: {self.design.HEIGHT}px;
-                    background: linear-gradient(135deg, {self.design.BG_PRIMARY} 0%, {self.design.BG_SECONDARY} 100%);
+                    background: linear-gradient(135deg, {self.design.COLORS["bg_dark"]} 0%, {self.design.COLORS["bg_light"]} 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    font-family: {self.design.FONT_FAMILY};
-                    color: {self.design.TEXT_PRIMARY};
-                }}
-                .title {{
-                    font-size: 72px;
-                    font-weight: 800;
-                    text-align: center;
-                    padding: 0 80px;
-                    line-height: 1.2;
-                    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                    font-family: Arial, sans-serif;
                 }}
                 .subtitle {{
-                    font-size: 36px;
+                    font-size: 80px;
                     font-weight: 400;
-                    color: {self.design.TEXT_SECONDARY};
-                    margin-top: 40px;
+                    color: {self.design.COLORS["text_light"]};
+                    margin-bottom: 60px;
                     text-transform: uppercase;
-                    letter-spacing: 4px;
+                    letter-spacing: 8px;
+                }}
+                .title {{
+                    font-size: 100px;
+                    font-weight: 800;
+                    color: {self.design.COLORS["white"]};
+                    text-align: center;
+                    padding: 0 {self.design.PADDING}px;
+                    line-height: 1.2;
                 }}
             </style>
         </head>
         <body>
-            <div class="subtitle">Top 10</div>
-            <div class="title">{topic}</div>
+            <div class="subtitle">TOP 10</div>
+            <div class="title">{clean_topic}</div>
         </body>
         </html>
         """
 
-    def create_item_slide(self, rank: int, name: str, tagline: str) -> str:
-        """Create slide for each Top 10 item"""
-        # Determine badge color based on rank
-        badge_color = self.design.GOLD if rank <= 3 else self.design.ACCENT_COLOR
+        return self._render_html_to_image(html_content)
 
-        return f"""
+    def create_item_slide(self, rank: int, name: str, tagline: str) -> str:
+        """Generate slide for Top 10 item and return path to screenshot"""
+        clean_name = html.escape(self._clean_text(name))
+        clean_tagline = html.escape(self._clean_text(tagline))
+
+        # Gold for top 3, orange-red for rest
+        badge_color = self.design.COLORS["secondary"] if rank <= 3 else self.design.COLORS["primary"]
+
+        html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <style>
                 body {{
                     margin: 0;
                     padding: 0;
                     width: {self.design.WIDTH}px;
                     height: {self.design.HEIGHT}px;
-                    background: linear-gradient(135deg, {self.design.BG_PRIMARY} 0%, {self.design.BG_SECONDARY} 100%);
+                    background: linear-gradient(135deg, {self.design.COLORS["bg_dark"]} 0%, {self.design.COLORS["bg_light"]} 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    font-family: {self.design.FONT_FAMILY};
-                    color: {self.design.TEXT_PRIMARY};
+                    font-family: Arial, sans-serif;
                     position: relative;
                 }}
                 .rank-badge {{
                     position: absolute;
-                    top: 100px;
-                    width: 180px;
-                    height: 180px;
+                    top: 120px;
+                    width: 220px;
+                    height: 220px;
                     background: {badge_color};
                     border-radius: 50%;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    font-size: 80px;
+                    font-size: 120px;
                     font-weight: 900;
+                    color: {self.design.COLORS["white"]};
                     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-                    border: 6px solid {self.design.TEXT_PRIMARY};
+                    border: 8px solid {self.design.COLORS["white"]};
                 }}
                 .name {{
-                    font-size: 64px;
+                    font-size: 90px;
                     font-weight: 800;
+                    color: {self.design.COLORS["white"]};
                     text-align: center;
-                    padding: 0 60px;
+                    padding: 0 {self.design.PADDING}px;
                     line-height: 1.3;
-                    margin-top: 180px;
-                    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                    margin-top: 200px;
                 }}
                 .tagline {{
-                    font-size: 32px;
+                    font-size: 50px;
                     font-weight: 400;
-                    color: {self.design.TEXT_SECONDARY};
+                    color: {self.design.COLORS["text_light"]};
                     text-align: center;
-                    padding: 0 80px;
-                    margin-top: 40px;
+                    padding: 0 {self.design.PADDING}px;
+                    margin-top: 60px;
                     line-height: 1.4;
                 }}
             </style>
         </head>
         <body>
             <div class="rank-badge">#{rank}</div>
-            <div class="name">{name}</div>
-            <div class="tagline">{tagline}</div>
+            <div class="name">{clean_name}</div>
+            <div class="tagline">{clean_tagline}</div>
         </body>
         </html>
         """
 
-    def create_cta_slide(self, topic: str) -> str:
-        """Create call-to-action ending slide"""
-        return f"""
+        return self._render_html_to_image(html_content)
+
+    def create_cta_slide(self) -> str:
+        """Generate call-to-action ending slide and return path to screenshot"""
+        html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <style>
                 body {{
                     margin: 0;
                     padding: 0;
                     width: {self.design.WIDTH}px;
                     height: {self.design.HEIGHT}px;
-                    background: linear-gradient(135deg, {self.design.BG_PRIMARY} 0%, {self.design.BG_SECONDARY} 100%);
+                    background: linear-gradient(135deg, {self.design.COLORS["bg_dark"]} 0%, {self.design.COLORS["bg_light"]} 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    font-family: {self.design.FONT_FAMILY};
-                    color: {self.design.TEXT_PRIMARY};
+                    font-family: Arial, sans-serif;
                 }}
                 .main-text {{
-                    font-size: 56px;
+                    font-size: 90px;
                     font-weight: 700;
+                    color: {self.design.COLORS["white"]};
                     text-align: center;
-                    padding: 0 80px;
+                    padding: 0 {self.design.PADDING}px;
                     line-height: 1.3;
-                }}
-                .emoji {{
-                    font-size: 120px;
-                    margin-bottom: 40px;
+                    margin-bottom: 100px;
                 }}
                 .cta {{
-                    font-size: 36px;
-                    color: {self.design.TEXT_SECONDARY};
-                    margin-top: 60px;
+                    font-size: 60px;
+                    color: {self.design.COLORS["text_light"]};
                     text-transform: uppercase;
-                    letter-spacing: 2px;
+                    letter-spacing: 4px;
                 }}
             </style>
         </head>
         <body>
-            <div class="emoji">👍</div>
             <div class="main-text">Thanks for Watching!</div>
-            <div class="cta">Subscribe for More Top 10 Lists</div>
+            <div class="cta">Subscribe for More</div>
         </body>
         </html>
         """
 
+        return self._render_html_to_image(html_content)
+
     def _render_html_to_image(self, html_content: str) -> str:
-        """Render HTML to image using Playwright"""
-        try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                page = browser.new_page(
-                    viewport={"width": self.design.WIDTH, "height": self.design.HEIGHT}
-                )
-                page.set_content(html_content)
+        """Render HTML to image using Playwright and return path to image file"""
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": self.design.WIDTH, "height": self.design.HEIGHT})
+            page.set_content(html_content)
 
-                # Create temp file for screenshot
-                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-                screenshot_path = temp_file.name
-                temp_file.close()
+            # Create temp file for screenshot
+            temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            screenshot_path = temp_file.name
+            temp_file.close()
 
-                page.screenshot(path=screenshot_path, full_page=True)
-                browser.close()
+            # Take screenshot
+            page.screenshot(path=screenshot_path, full_page=True)
+            browser.close()
 
-                return screenshot_path
+            return screenshot_path
 
-        except Exception as e:
-            logger.error(f"Failed to render HTML to image: {e}")
-            raise
+    def _clean_text(self, text: str) -> str:
+        """Remove ALL special characters, emojis, and AI markers"""
+        # Remove ALL emojis and unicode symbols
+        text = re.sub(r'[\U00010000-\U0010ffff]', '', text)  # Remove 4-byte unicode (emojis)
+        text = re.sub(r'[\u2600-\u27BF]', '', text)  # Remove dingbats
+        text = re.sub(r'[\uE000-\uF8FF]', '', text)  # Remove private use
+        text = re.sub(r'[\u2700-\u27BF]', '', text)  # Remove misc symbols
+
+        # Remove AI-related markers
+        ai_patterns = [
+            r'AI-powered\s*',
+            r'powered by AI\s*',
+            r'real-time analysis\s*',
+            r'machine learning\s*',
+        ]
+        for pattern in ai_patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+
+        # Remove control characters
+        text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text)
+
+        # Remove multiple spaces
+        text = re.sub(r'\s+', ' ', text)
+
+        # Remove leading/trailing whitespace
+        text = text.strip()
+
+        return text
 
 
 class VideoGenerator:
@@ -236,81 +277,8 @@ class VideoGenerator:
         self.height = height
         self.fps = fps
         self.slide_generator = TopTenSlide()
-        self.tts_client = None
-
-        # Initialize TTS client if credentials available
-        try:
-            self.tts_client = texttospeech.TextToSpeechClient()
-            logger.info("Initialized Google Cloud Text-to-Speech client")
-        except Exception as e:
-            logger.warning(f"Could not initialize TTS client: {e}")
 
         logger.info(f"Initialized VideoGenerator: {width}x{height} @ {fps}fps")
-
-    def _clean_text(self, text: str) -> str:
-        """Clean text for narration - remove emojis and special markers"""
-        # Remove emojis
-        text = text.encode('ascii', 'ignore').decode('ascii')
-
-        # Remove AI-related markers
-        text = re.sub(r'🤖.*?Generated with.*?Co-Authored-By:.*?Claude.*?', '', text, flags=re.DOTALL)
-        text = re.sub(r'Generated with.*?Claude.*?', '', text, flags=re.DOTALL)
-        text = re.sub(r'\[.*?\]\(.*?\)', '', text)  # Remove markdown links
-
-        # Clean up whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
-
-        return text
-
-    def _generate_narration(self, script: str, topic: str) -> Optional[str]:
-        """Generate narration audio using Google Cloud TTS"""
-        if not self.tts_client:
-            logger.warning("TTS client not available, skipping narration")
-            return None
-
-        try:
-            # Clean script
-            clean_script = self._clean_text(script)
-
-            logger.info(f"Generating narration for: {topic[:50]}...")
-
-            synthesis_input = texttospeech.SynthesisInput(text=clean_script)
-
-            # Configure voice (professional male voice)
-            voice = texttospeech.VoiceSelectionParams(
-                language_code="en-US",
-                name="en-US-Neural2-D",
-                ssml_gender=texttospeech.SsmlVoiceGender.MALE
-            )
-
-            # Configure audio
-            audio_config = texttospeech.AudioConfig(
-                audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.95,
-                pitch=-2.0
-            )
-
-            # Generate audio
-            response = self.tts_client.synthesize_speech(
-                input=synthesis_input,
-                voice=voice,
-                audio_config=audio_config
-            )
-
-            # Save to temp file
-            temp_file = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
-            audio_path = temp_file.name
-            temp_file.close()
-
-            with open(audio_path, 'wb') as f:
-                f.write(response.audio_content)
-
-            logger.info(f"Narration saved to {audio_path}")
-            return audio_path
-
-        except Exception as e:
-            logger.error(f"Failed to generate narration: {e}")
-            return None
 
     def create_video_from_images(
         self,
@@ -334,98 +302,254 @@ class VideoGenerator:
         logger.info(f"Creating video with {len(images)} images")
 
         try:
-            # Create temp directory
-            temp_dir = Path(tempfile.mkdtemp())
-
             # Generate narration audio if script provided
             audio_path = None
             if script:
                 audio_path = self._generate_narration(script, title)
 
             # Create slides
-            slides = []
+            slide_paths = []
 
             # 1. Title slide
             logger.info("Creating title slide...")
-            title_html = self.slide_generator.create_title_slide(title)
-            title_img = self.slide_generator._render_html_to_image(title_html)
-            slides.append({"path": title_img, "duration": 3.0})
+            title_img = self.slide_generator.create_title_slide(title)
+            slide_paths.append(title_img)
 
             # 2. Sort images by rank (descending for countdown)
             sorted_images = sorted(images, key=lambda x: x["rank"], reverse=True)
 
-            # 3. Item slides (use actual generated images)
+            # 3. Item slides (use actual generated images, not HTML slides for items)
             for img_data in sorted_images:
-                slides.append({
-                    "path": img_data["path"],
-                    "duration": 5.0
-                })
+                slide_paths.append(img_data["path"])
 
             # 4. CTA slide
             logger.info("Creating CTA slide...")
-            cta_html = self.slide_generator.create_cta_slide(title)
-            cta_img = self.slide_generator._render_html_to_image(cta_html)
-            slides.append({"path": cta_img, "duration": 3.0})
+            cta_img = self.slide_generator.create_cta_slide()
+            slide_paths.append(cta_img)
 
             # Create video with MoviePy
-            logger.info("Assembling video with MoviePy...")
-            video_clips = []
+            video_path = self._create_video_from_slides(
+                slide_paths,
+                audio_path,
+                title,
+                output_path.name
+            )
 
-            for slide in slides:
-                clip = ImageClip(slide["path"]).set_duration(slide["duration"])
-                video_clips.append(clip)
+            logger.info(f"Video created successfully: {video_path}")
+            return Path(video_path)
 
-            final_video = concatenate_videoclips(video_clips, method="compose")
+        except Exception as e:
+            logger.error(f"Video creation failed: {e}", exc_info=True)
+            raise
 
-            # Add audio if available
-            if audio_path and Path(audio_path).exists():
-                logger.info("Adding narration audio...")
-                narration = AudioFileClip(audio_path)
+    def _generate_narration(self, script: str, topic: str) -> Optional[str]:
+        """Generate narration audio using Google Cloud TTS"""
+        try:
+            # Clean the script for TTS
+            clean_script = script
 
-                # Check for background music
+            # Remove ALL emojis and unicode symbols
+            clean_script = re.sub(r'[\U00010000-\U0010ffff]', '', clean_script)
+            clean_script = re.sub(r'[\u2600-\u27BF]', '', clean_script)
+            clean_script = re.sub(r'[\uE000-\uF8FF]', '', clean_script)
+
+            # Remove hashtags and @ mentions
+            clean_script = re.sub(r'#\w+', '', clean_script)
+            clean_script = re.sub(r'@\w+', '', clean_script)
+
+            # Remove URLs
+            clean_script = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', clean_script)
+
+            # Remove special markdown/formatting characters
+            clean_script = re.sub(r'[*_`~]', '', clean_script)
+
+            # Remove dollar signs when used as currency symbol
+            clean_script = re.sub(r'\$(?=\d)', '', clean_script)
+
+            # Remove other non-spoken punctuation but keep periods, commas, question marks, exclamation
+            clean_script = re.sub(r'[^\w\s.,!?\'-]', ' ', clean_script)
+
+            # Clean up multiple spaces
+            clean_script = re.sub(r'\s+', ' ', clean_script)
+            clean_script = clean_script.strip()
+
+            logger.info(f"Cleaned narration script: {clean_script[:100]}...")
+
+            client = texttospeech.TextToSpeechClient()
+
+            synthesis_input = texttospeech.SynthesisInput(text=clean_script)
+
+            # Use professional male voice
+            voice = texttospeech.VoiceSelectionParams(
+                language_code="en-US",
+                name="en-US-Neural2-D",
+                ssml_gender=texttospeech.SsmlVoiceGender.MALE
+            )
+
+            audio_config = texttospeech.AudioConfig(
+                audio_encoding=texttospeech.AudioEncoding.MP3,
+                speaking_rate=0.95,
+                pitch=-2.0
+            )
+
+            response = client.synthesize_speech(
+                input=synthesis_input,
+                voice=voice,
+                audio_config=audio_config
+            )
+
+            # Save to temp file
+            temp_file = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
+            audio_path = temp_file.name
+            temp_file.close()
+
+            with open(audio_path, 'wb') as f:
+                f.write(response.audio_content)
+
+            logger.info(f"Narration saved to {audio_path}")
+            return audio_path
+
+        except Exception as e:
+            logger.error(f"TTS generation failed: {str(e)}", exc_info=True)
+            logger.error("Video will be created without narration audio")
+            return None
+
+    def _set_audio_compat(self, video_clip, audio_clip):
+        """Helper to set audio with MoviePy 1.x/2.x compatibility"""
+        try:
+            # Try MoviePy 2.x method first
+            return video_clip.with_audio(audio_clip)
+        except AttributeError:
+            # Fallback to MoviePy 1.x method
+            return video_clip.set_audio(audio_clip)
+
+    def _create_video_from_slides(
+        self,
+        slide_paths: List[str],
+        audio_path: Optional[str],
+        title: str,
+        output_filename: str
+    ) -> str:
+        """Stitch slides into video with narration"""
+        try:
+            # Load audio to get duration
+            if audio_path and os.path.exists(audio_path):
+                audio_clip = AudioFileClip(audio_path)
+                total_duration = audio_clip.duration
+            else:
+                # Default: 3 seconds per slide
+                total_duration = len(slide_paths) * 3
+                audio_clip = None
+
+            # Calculate duration per slide
+            duration_per_slide = total_duration / len(slide_paths)
+
+            # Create video clips from slides with explicit size (1080x1920 for YouTube Shorts)
+            clips = []
+            for slide_path in slide_paths:
+                clip = ImageClip(slide_path, duration=duration_per_slide)
+                # Ensure clip maintains 1080x1920 resolution
+                try:
+                    clip = clip.resized((1080, 1920))
+                except AttributeError:
+                    clip = clip.resize((1080, 1920))
+                clips.append(clip)
+
+            # Concatenate clips
+            final_clip = concatenate_videoclips(clips, method="compose")
+
+            # Add audio (narration + background music)
+            logger.info(f"Audio clip exists: {audio_clip is not None}")
+            if audio_clip:
+                logger.info(f"Audio clip duration: {audio_clip.duration}s")
+                # Check for background music file
                 bg_music_path = Path(__file__).parent / "bg.mp4"
+                logger.info(f"Looking for background music at: {bg_music_path}")
 
                 if bg_music_path.exists():
-                    logger.info("Adding background music...")
-                    bg_music = AudioFileClip(str(bg_music_path))
+                    # Background music exists - mix with narration
+                    try:
+                        logger.info(f"Loading background music from {bg_music_path}")
+                        bg_music = AudioFileClip(str(bg_music_path))
 
-                    # Loop background music if needed
-                    if bg_music.duration < narration.duration:
-                        n_loops = int(narration.duration / bg_music.duration) + 1
-                        bg_music = bg_music.loop(n_loops)
+                        # Loop background music to match video duration if needed
+                        if bg_music.duration < total_duration:
+                            loops_needed = int(total_duration / bg_music.duration) + 1
+                            bg_music = bg_music.loop(n=loops_needed)
 
-                    bg_music = bg_music.subclip(0, narration.duration)
-                    bg_music = bg_music.volumex(0.15)  # 15% volume for background
+                        # Trim to exact duration
+                        try:
+                            bg_music = bg_music.subclipped(0, total_duration)
+                        except AttributeError:
+                            bg_music = bg_music.subclip(0, total_duration)
 
-                    # Combine audio
-                    final_audio = CompositeAudioClip([narration, bg_music])
+                        # Lower background music volume to 15% so narration is clear
+                        bg_music = bg_music.volumex(0.15)
+
+                        # Mix narration with background music
+                        final_audio = CompositeAudioClip([audio_clip, bg_music])
+                        final_clip = self._set_audio_compat(final_clip, final_audio)
+                        logger.info("Successfully added background music at 15% volume")
+                    except Exception as e:
+                        logger.warning(f"Failed to load background music: {e}. Using narration only.")
+                        final_clip = self._set_audio_compat(final_clip, audio_clip)
                 else:
-                    final_audio = narration
+                    # No background music file - use narration only
+                    logger.info(f"Background music file not found at {bg_music_path}. Using narration only.")
+                    final_clip = self._set_audio_compat(final_clip, audio_clip)
+            else:
+                # No narration - try to add just background music
+                bg_music_path = Path(__file__).parent / "bg.mp4"
+                if bg_music_path.exists():
+                    try:
+                        logger.info(f"No narration audio. Loading background music from {bg_music_path}")
+                        bg_music = AudioFileClip(str(bg_music_path))
 
-                final_video = final_video.set_audio(final_audio)
-                final_video = final_video.subclip(0, narration.duration)
+                        if bg_music.duration < total_duration:
+                            loops_needed = int(total_duration / bg_music.duration) + 1
+                            bg_music = bg_music.loop(n=loops_needed)
 
-            # Write final video
+                        # Trim to exact duration
+                        try:
+                            bg_music = bg_music.subclipped(0, total_duration)
+                        except AttributeError:
+                            bg_music = bg_music.subclip(0, total_duration)
+
+                        bg_music = bg_music.volumex(0.25)  # 25% volume without narration
+                        final_clip = self._set_audio_compat(final_clip, bg_music)
+                        logger.info("Successfully added background music at 25% volume (no narration)")
+                    except Exception as e:
+                        logger.warning(f"Failed to add background music: {e}. Video will have no audio.")
+                else:
+                    logger.info(f"No narration and no background music file found. Video will have no audio.")
+
+            # Output path
+            output_path = Path("videos") / output_filename
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            final_video.write_videofile(
+
+            # Check if video has audio
+            has_audio = final_clip.audio is not None
+            logger.info(f"Writing video with audio: {has_audio}")
+
+            final_clip.write_videofile(
                 str(output_path),
                 fps=self.fps,
-                codec='libx264',
-                audio_codec='aac',
+                codec="libx264",
+                audio_codec="aac",
+                audio=has_audio,
                 preset='medium',
                 threads=4
             )
 
             # Cleanup
-            final_video.close()
-            if audio_path and Path(audio_path).exists():
-                Path(audio_path).unlink()
+            final_clip.close()
+            if audio_path and os.path.exists(audio_path):
+                os.unlink(audio_path)
 
-            logger.info(f"Video created successfully: {output_path}")
-            return output_path
+            return str(output_path)
 
         except Exception as e:
-            logger.error(f"Video creation failed: {e}", exc_info=True)
+            logger.error(f"Video assembly failed: {str(e)}", exc_info=True)
             raise
 
 
@@ -434,12 +558,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     generator = VideoGenerator()
-
-    # Test slide generation
-    slide_gen = TopTenSlide()
-
-    test_html = slide_gen.create_title_slide("Top 10 Amazing Cities")
-    print("Title slide HTML generated")
-
-    item_html = slide_gen.create_item_slide(1, "Paris", "The City of Light and Romance")
-    print("Item slide HTML generated")
+    print("Video generator initialized successfully")

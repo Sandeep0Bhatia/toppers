@@ -81,14 +81,15 @@ class ImageGenerator:
     def _generate_dalle(self, prompt: str, output_path: Path) -> Path:
         """Generate image using DALL-E 3"""
         try:
-            # Enhance prompt for photorealistic style
-            enhanced_prompt = f"Professional high-resolution photograph, photorealistic, natural lighting, {prompt}, shot with professional camera, ultra detailed, realistic"
+            # Enhance prompt for realistic photographic style
+            # Use very explicit instructions for real-world photography
+            enhanced_prompt = f"A real photograph taken with a professional camera showing {prompt}. This is NOT an illustration, NOT digital art, NOT a painting. This is an actual photograph of a real scene with natural lighting, realistic details, and photographic depth of field. Documentary photography style, National Geographic quality."
 
             response = self.client.images.generate(
                 model="dall-e-3",
                 prompt=enhanced_prompt,
                 size="1024x1792",  # Portrait, closest to 9:16
-                quality="standard",
+                quality="hd",  # Use HD quality for better realism
                 n=1
             )
 
