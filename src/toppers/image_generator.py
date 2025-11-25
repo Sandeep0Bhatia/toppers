@@ -8,23 +8,25 @@ from pathlib import Path
 from typing import Dict, List
 import requests
 from openai import OpenAI
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
 
 class ImageGenerator:
-    """Generates images using AI (DALL-E, Stability AI, or Replicate)"""
+    """Generates images using AI (DALL-E, Stability AI, Replicate, or Gemini)"""
 
     def __init__(self, provider: str = "dalle"):
         """
         Initialize image generator.
 
         Args:
-            provider: Image generation provider ('dalle', 'stability', 'replicate')
+            provider: Image generation provider ('dalle', 'stability', 'replicate', 'gemini')
         """
         self.provider = provider.lower()
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.stability_api_key = os.getenv("STABILITY_API_KEY")
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY")
 
         if self.provider == "dalle":
             if not self.openai_api_key:
@@ -39,6 +41,10 @@ class ImageGenerator:
                 self.replicate = replicate
             except ImportError:
                 raise ImportError("replicate package not installed. Run: pip install replicate")
+        elif self.provider == "gemini":
+            if not self.gemini_api_key:
+                raise ValueError("GEMINI_API_KEY not set for Google Gemini")
+            genai.configure(api_key=self.gemini_api_key)
 
         logger.info(f"Initialized ImageGenerator with provider: {self.provider}")
 
@@ -70,6 +76,8 @@ class ImageGenerator:
                 return self._generate_stability(prompt, output_path, width, height)
             elif self.provider == "replicate":
                 return self._generate_replicate(prompt, output_path, width, height)
+            elif self.provider == "gemini":
+                return self._generate_gemini(prompt, output_path)
             else:
                 raise ValueError(f"Unknown provider: {self.provider}")
 
@@ -106,6 +114,38 @@ class ImageGenerator:
 
         except Exception as e:
             logger.error(f"DALL-E generation failed: {e}")
+            raise
+
+    def _generate_gemini(self, prompt: str, output_path: Path) -> Path:
+        """Generate image using Google Gemini"""
+        try:
+            # Keep prompt simple and short for realistic results
+            # Just add minimal realistic photography instruction
+            enhanced_prompt = f"A photograph of {prompt}"
+
+            # Use Gemini 2.5 Flash Image model
+            model = genai.GenerativeModel('gemini-2.5-flash-image')
+
+            response = model.generate_content(enhanced_prompt)
+
+            # Save the generated image
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Extract image from response parts
+            if hasattr(response, 'parts'):
+                for part in response.parts:
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        if part.inline_data.mime_type.startswith('image/'):
+                            image_data = part.inline_data.data
+                            with open(output_path, 'wb') as f:
+                                f.write(image_data)
+                            logger.info(f"Gemini image saved to {output_path}")
+                            return output_path
+
+            raise Exception("No image data found in Gemini response")
+
+        except Exception as e:
+            logger.error(f"Gemini generation failed: {e}")
             raise
 
     def _generate_stability(
