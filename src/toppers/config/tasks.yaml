@@ -1,0 +1,144 @@
+research_top10:
+  description: >
+    Research and analyze the Top 10 list: "{topic}"
+
+    Your task is to identify the definitive Top 10 items for this topic and research
+    each one thoroughly. For EACH of the 10 items, provide:
+
+    1. RANKING: Clear position (1-10) with brief explanation of why it ranks there
+    2. KEY FACTS: 3-4 fascinating, specific facts with numbers, dates, or statistics
+    3. UNIQUE CHARACTERISTICS: What makes this item special or different
+    4. SURPRISING ELEMENT: One unexpected or little-known fact that will surprise viewers
+    5. VISUAL DESCRIPTION: Brief description of iconic visual elements for image generation
+
+    Research Requirements:
+    - Use current, accurate data from reliable sources (last 2 years preferred)
+    - Include specific numbers, statistics, percentages when possible
+    - Find unique angles that aren't commonly known
+    - Consider: beauty, cultural significance, impact, uniqueness, or relevance to the topic
+    - Verify facts are accurate and defensible
+
+    Output Format:
+    Return a JSON object with this structure:
+    {{
+      "topic": "Top 10 [topic name]",
+      "items": [
+        {{
+          "rank": 1,
+          "name": "Item Name",
+          "tagline": "One catchy sentence that captures why it's #1",
+          "key_facts": ["Fact 1 with numbers/dates", "Fact 2", "Fact 3"],
+          "unique_characteristic": "What makes it stand out",
+          "surprising_fact": "The 'wow' moment for viewers",
+          "visual_description": "Key visual elements for image generation"
+        }},
+        ... (repeat for all 10 items)
+      ]
+    }}
+
+    IMPORTANT: Return ONLY valid JSON, no additional text or markdown.
+  expected_output: >
+    A valid JSON object containing all 10 researched items with complete details
+    for each item (rank, name, tagline, facts, characteristics, surprise, visual).
+  agent: research_specialist
+
+create_script:
+  description: >
+    Transform the research for "{topic}" into an engaging 60-second YouTube Shorts script.
+
+    Script Structure:
+
+    HOOK (First 3 seconds):
+    - Start with a shocking statement, question, or bold claim
+    - Examples: "You won't BELIEVE #1!" or "The answer to #3 will shock you!"
+
+    COUNTDOWN (45 seconds):
+    - Present items from #10 to #1 (reverse order for suspense)
+    - For each item: Name + ONE punchy fact (5-6 seconds max)
+    - Use conversational, energetic language
+    - Build excitement as you approach #1
+
+    PAYOFF (Final 12 seconds):
+    - Reveal #1 with drama
+    - Share the most surprising fact about #1
+    - End with engagement CTA: "Which one surprised YOU the most? Comment below!"
+
+    Style Guide:
+    - Short sentences (5-8 words average)
+    - Active voice, present tense
+    - Use power words: incredible, stunning, mind-blowing, legendary
+    - Add transitions: "But wait...", "Here's where it gets crazy...", "And number 1 is..."
+    - Total word count: ~140-160 words (60 seconds at conversational pace)
+
+    Research Data:
+    {research_data}
+
+    Output Format:
+    Return a JSON object:
+    {{
+      "script": "Full narration script with natural pauses marked by ellipses...",
+      "hook": "The opening line",
+      "items_script": [
+        {{"rank": 10, "name": "Item Name", "narration": "Script for this item"}},
+        ... (for all 10)
+      ],
+      "cta": "Call to action ending"
+    }}
+
+    IMPORTANT: Return ONLY valid JSON, no additional text.
+  expected_output: >
+    A valid JSON object with the complete video script optimized for 60-second YouTube Shorts,
+    including hook, item-by-item narration, and CTA.
+  agent: content_writer
+
+generate_image_prompts:
+  description: >
+    Create detailed AI image generation prompts for each of the 10 items in: "{topic}"
+
+    For EACH item, generate a prompt that will produce a stunning, professional visual.
+
+    Prompt Structure:
+    [Main Subject], [Style/Aesthetic], [Composition], [Lighting], [Mood/Atmosphere], [Technical specs]
+
+    Guidelines:
+    1. MAIN SUBJECT: Clearly describe the item with specific visual details
+    2. STYLE: Choose artistic style (photorealistic, cinematic, artistic, illustrated, etc.)
+    3. COMPOSITION: Describe framing (close-up, wide shot, aerial view, etc.)
+    4. LIGHTING: Specify lighting (golden hour, dramatic, soft, studio, natural)
+    5. MOOD: Set emotional tone (majestic, serene, vibrant, mysterious, elegant)
+    6. TECHNICAL: Add quality tags (8K, ultra detailed, professional photography, award-winning)
+
+    Image Requirements:
+    - Portrait orientation (9:16 ratio for YouTube Shorts)
+    - Visually striking and attention-grabbing
+    - Clear focal point, not cluttered
+    - Appropriate for all audiences
+    - Consistent visual theme across all 10 images
+
+    Research Data:
+    {research_data}
+
+    Example Prompt:
+    "Majestic waterfall cascading through lush rainforest, cinematic photography, wide landscape shot,
+    golden hour lighting filtering through mist, serene and breathtaking atmosphere, ultra detailed,
+    8K resolution, professional nature photography, National Geographic style"
+
+    Output Format:
+    {{
+      "theme": "Overall visual theme/style for the video",
+      "prompts": [
+        {{
+          "rank": 1,
+          "name": "Item Name",
+          "prompt": "Complete detailed prompt for AI image generation",
+          "style_notes": "Brief explanation of visual choices"
+        }},
+        ... (for all 10 items)
+      ]
+    }}
+
+    IMPORTANT: Return ONLY valid JSON, no additional text.
+  expected_output: >
+    A valid JSON object with detailed image generation prompts for all 10 items,
+    plus overall theme guidance for visual consistency.
+  agent: visual_designer
