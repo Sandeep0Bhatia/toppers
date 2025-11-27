@@ -9,7 +9,8 @@ research_top10:
     2. KEY FACTS: 3-4 fascinating, specific facts with numbers, dates, or statistics
     3. UNIQUE CHARACTERISTICS: What makes this item special or different
     4. SURPRISING ELEMENT: One unexpected or little-known fact that will surprise viewers
-    5. VISUAL DESCRIPTION: Brief description of iconic visual elements for image generation
+    5. NARRATION FOCUS: The ONE specific fact/moment that will be the main focus in the narration (this will guide image generation)
+    6. VISUAL CONTEXT: Simple description of the visual moment that shows the narration focus (max 8 words)
 
     Research Requirements:
     - Use current, accurate data from reliable sources (last 2 years preferred)
@@ -17,6 +18,8 @@ research_top10:
     - Find unique angles that aren't commonly known
     - Consider: beauty, cultural significance, impact, uniqueness, or relevance to the topic
     - Verify facts are accurate and defensible
+    - For narration_focus: Choose the MOST interesting/surprising fact that deserves visual representation
+    - For visual_context: Describe a specific moment/scene that shows this fact (e.g., "construction in 1889" not "beautiful architecture")
 
     Output Format:
     Return a JSON object with this structure:
@@ -30,7 +33,8 @@ research_top10:
           "key_facts": ["Fact 1 with numbers/dates", "Fact 2", "Fact 3"],
           "unique_characteristic": "What makes it stand out",
           "surprising_fact": "The 'wow' moment for viewers",
-          "visual_description": "Key visual elements for image generation"
+          "narration_focus": "The specific fact/angle that narration will emphasize",
+          "visual_context": "Specific visual moment (max 8 words)"
         }},
         ... (repeat for all 10 items)
       ]
@@ -39,7 +43,7 @@ research_top10:
     IMPORTANT: Return ONLY valid JSON, no additional text or markdown.
   expected_output: >
     A valid JSON object containing all 10 researched items with complete details
-    for each item (rank, name, tagline, facts, characteristics, surprise, visual).
+    for each item (rank, name, tagline, facts, characteristics, surprise, narration focus, visual context).
   agent: research_specialist
 
 create_script:
@@ -93,47 +97,53 @@ create_script:
 
 generate_image_prompts:
   description: >
-    Create SHORT, SIMPLE, REALISTIC image prompts for each of the 10 items in: "{topic}"
+    Create SHORT, CONTEXTUAL, REALISTIC image prompts for each of the 10 items in: "{topic}"
 
     CRITICAL RULES:
     1. Keep prompts SHORT (maximum 10-15 words)
-    2. Focus ONLY on the specific item name - nothing else
-    3. Use ONLY the item name plus basic context
+    2. Use the item's "visual_context" from research to create contextual prompts
+    3. Combine: item name + visual_context to show the specific narration moment
     4. NO artistic style words (cinematic, majestic, breathtaking, etc.)
     5. NO technical terms (8K, ultra detailed, award-winning, etc.)
     6. NO mood/atmosphere descriptions
     7. Just describe what should be photographed simply and directly
 
-    Research Data:
+    Research Data (includes visual_context for each item):
     {research_data}
 
-    GOOD Examples:
-    - "Eiffel Tower in Paris during daytime"
-    - "Golden Gate Bridge with San Francisco skyline"
-    - "Mount Everest snow-covered peak"
-    - "Venice canal with gondolas"
-    - "Great Barrier Reef underwater coral"
+    STRATEGY:
+    - Each research item has "visual_context" - USE THIS to create the prompt
+    - Format: "[Item Name] [visual_context]"
+    - This ensures images match the narration focus
 
-    BAD Examples (too long/artistic):
-    - "Majestic Eiffel Tower bathed in golden sunset light, cinematic photography, 8K resolution"
-    - "Stunning aerial view of Golden Gate Bridge with dramatic clouds, National Geographic style"
+    GOOD Examples (using visual_context):
+    - "Eiffel Tower under construction in 1889" (shows narration about World's Fair)
+    - "Golden Gate Bridge during 1937 opening ceremony" (shows historical moment)
+    - "Mount Everest first summit expedition 1953" (shows achievement context)
+    - "Venice canal flooding in acqua alta" (shows specific phenomenon)
+    - "Great Barrier Reef coral bleaching damage" (shows environmental angle)
+
+    BAD Examples (generic or too artistic):
+    - "Eiffel Tower in Paris during daytime" (too generic, misses narration context)
+    - "Majestic Golden Gate Bridge bathed in golden sunset" (artistic, not contextual)
+    - "Stunning aerial view of Mount Everest, 8K resolution" (technical jargon)
 
     Output Format:
     {{
-      "theme": "realistic photography",
+      "theme": "contextual realistic photography",
       "prompts": [
         {{
           "rank": 1,
           "name": "Item Name",
-          "prompt": "Short simple description of the item (max 15 words)",
+          "prompt": "Item name plus visual_context (max 15 words)",
           "style_notes": "realistic photograph"
         }},
         ... (for all 10 items)
       ]
     }}
 
-    IMPORTANT: Keep prompts SHORT and SIMPLE. Return ONLY valid JSON, no additional text.
+    IMPORTANT: Use the visual_context from research data. Keep prompts SHORT, SIMPLE, and CONTEXTUAL. Return ONLY valid JSON, no additional text.
   expected_output: >
-    A valid JSON object with SHORT, SIMPLE, REALISTIC image prompts for all 10 items.
-    Each prompt should be maximum 10-15 words focusing only on the item itself.
+    A valid JSON object with SHORT, CONTEXTUAL, REALISTIC image prompts for all 10 items.
+    Each prompt should combine item name with visual_context from research (max 10-15 words total).
   agent: visual_designer

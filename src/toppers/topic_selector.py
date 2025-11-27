@@ -102,32 +102,134 @@ class TopicHistoryManager:
 
 
 class TopicSelector:
-    """Generates creative Top 10 list topics"""
+    """Generates viral, unique, compelling Top 10 list topics designed to maximize engagement"""
 
+    # Trending content categories that drive views
     CATEGORIES = [
-        "Beauty & Aesthetics",
-        "Intelligence & Education",
-        "Culture & Traditions",
-        "Nature & Geography",
-        "Food & Cuisine",
-        "History & Heritage",
-        "Innovation & Technology",
-        "Arts & Creativity",
-        "Wellness & Lifestyle",
-        "Human Values & Character"
+        "Psychology & Human Behavior",  # What makes people tick
+        "Controversial Truths",  # Debunking myths
+        "Hidden Gems & Underrated",  # Discovery angle
+        "Jaw-Dropping Coincidences",  # Viral-worthy moments
+        "Mind-Bending Paradoxes",  # Intellectual hooks
+        "Rare Phenomenon & Anomalies",  # Weird and fascinating
+        "Power & Influence",  # Status-seeking content
+        "Dark History & Secrets",  # Intrigue factor
+        "Unexpected Connections",  # "You won't believe it's connected"
+        "Transformation Stories",  # Before-after narratives
+        "Breaking the Rules",  # Counter-culture appeal
+        "Scientific Mind-Blowers",  # "Scientists were shocked"
+        "Hidden Patterns in Nature",  # Discovery-driven
+        "Money & Status",  # Aspirational
+        "Survival & Extreme Scenarios",  # Tension and stakes
+        # Visually compelling categories (generate desirable, attractive imagery)
+        "Luxury Lifestyles & Aesthetics",  # High-end visuals - mansions, yachts, exotic locations
+        "Exotic Destinations & Beauty",  # Stunning visuals - waterfalls, beaches, architecture
+        "Opulent & Lavish",  # Jewels, gold, premium materials
+        "Natural Wonders & Landscapes",  # Breathtaking imagery - mountains, deserts, forests
+        "Fashion & Style Evolution",  # Visually striking - designers, outfits, transformations
+        "Architecture & Design Marvels",  # Iconic buildings, modern design - heavily visual
+        "Art & Masterpieces",  # Paintings, sculptures, installations - instantly compelling
+        "Extreme Beauty & Aesthetics",  # Perfect faces, perfect bodies, peak conditions
+        "Supercars & Exotic Vehicles",  # Highly desirable - Ferrari, McLaren, Bugatti
+        "Exclusive Islands & Hideaways",  # Private islands, secret locations - aspirational
+        "Gourmet & Culinary Delights",  # Food photography - plating, luxury dining
+        "Rare & Precious Collections",  # Diamonds, artifacts, collectibles - visually rich
+        "Paradise Experiences",  # Underwater diving, forests, tropical scenes
+        "Premium Fashion Houses",  # Designer collections, runway shows
+        "Architectural Wonders",  # Ancient & modern - visually stunning
     ]
 
-    TOPIC_TEMPLATES = [
-        "Top 10 Countries with the Most {adjective} {subject}",
-        "Top 10 Cities Known for {characteristic}",
-        "Top 10 {subject} That Changed {context}",
-        "Top 10 Places to Experience {experience}",
-        "Top 10 Books About {theme}",
-        "Top 10 Innovations in {field}",
-        "Top 10 Traditional {subject} Around the World",
-        "Top 10 {adjective} Destinations for {purpose}",
-        "Top 10 Historical {subject} That Shaped {outcome}",
-        "Top 10 Foods That {benefit}"
+    # Viral trigger frameworks that drive engagement
+    VIRAL_FRAMEWORKS = [
+        # Contrarian angle
+        "Top 10 Things Everyone Believes That Are Actually WRONG",
+        "Top 10 {field} That Defy Logic",
+        "Top 10 Myths Debunked: What You Didn't Know",
+        
+        # Scarcity/Rarity
+        "Top 10 Rarest {items} Ever Discovered",
+        "Top 10 Most Exclusive {experiences} In The World",
+        "Top 10 Almost-Extinct {things} Making a Comeback",
+        
+        # Curiosity gaps
+        "Top 10 Unsolved {mysteries} That Still Baffle Scientists",
+        "Top 10 Forbidden {items} You Can't Access",
+        "Top 10 Hidden {secrets} Behind Everyday Things",
+        
+        # Status/aspiration
+        "Top 10 Habits of the World's Most Successful {people}",
+        "Top 10 Things Only {group} Know About",
+        "Top 10 Secrets of {elite_category}",
+        
+        # Weird/unusual
+        "Top 10 Strangest {phenomena} Science Can't Explain",
+        "Top 10 Most Unusual {things} Ever Recorded",
+        "Top 10 Bizarre {creatures} Living Undetected",
+        
+        # Practical utility with a twist
+        "Top 10 {Skills} That Changed People's Lives (In Weeks)",
+        "Top 10 Forgotten {techniques} That Still Work Better",
+        "Top 10 Cheap Hacks That Outperform Expensive {products}",
+        
+        # Emotional resonance
+        "Top 10 Touching Stories That Will Restore Your Faith In Humanity",
+        "Top 10 Most Inspiring {people} Nobody's Heard Of",
+        
+        # Plot twist angle
+        "Top 10 {historical_events} With Shocking Plot Twists",
+        "Top 10 Celebrities Who Had Secret {identities}",
+        
+        # "You won't believe" angle
+        "Top 10 {Places} Where Strange Things Happen",
+        "Top 10 {Professions} With Crazy Untold Secrets"
+    ]
+
+    # Psychological hooks that make content shareable
+    ENGAGEMENT_HOOKS = {
+        "curiosity": ["What you don't know", "Hidden", "Secret", "Untold", "Shocking", "Revealed"],
+        "contrast": ["Actually Wrong", "Defy Logic", "Myth Busted", "The Truth Is", "You've Been Lied To"],
+        "urgency": ["Disappearing", "Going Extinct", "Won't Last Long", "Before It's Too Late"],
+        "exclusivity": ["Only", "Elite", "Rare", "Forbidden", "Underground"],
+        "emotional": ["Touching", "Restored Faith", "Inspiring", "Heart-Warming", "Unforgettable"],
+        "weird": ["Strangest", "Bizarre", "Unexplained", "Creepy", "Unsettling"],
+        # Visual/aesthetic hooks for image generation
+        "desirable": ["Stunning", "Breathtaking", "Jaw-Dropping Beauty", "Absolutely Gorgeous", "Mesmerizing", "Luxurious"],
+        "aspirational": ["Dream", "Fantasy", "Wish List", "Goals", "Most Coveted", "Bucket List"],
+        "visual_intrigue": ["Visual Masterpiece", "Unbelievably Beautiful", "Beyond Imagination", "Iconic", "Legendary"]
+    }
+
+    # Image quality optimization frameworks - topics that generate stunning visuals
+    VISUAL_FRAMEWORKS = [
+        # Luxury & Desirable
+        "Top 10 Most Luxurious {items} Money Can Buy",
+        "Top 10 Dream {experiences} of the Ultra-Wealthy",
+        "Top 10 Most Expensive & Exclusive {things}",
+        
+        # Natural beauty & landscapes
+        "Top 10 Most Breathtaking {places} On Earth",
+        "Top 10 Stunning {natural_phenomena} That Defy Belief",
+        "Top 10 Hidden {locations} With Unbelievable Beauty",
+        
+        # Aesthetic & design
+        "Top 10 Most Iconic {architectural_structures} Ever Built",
+        "Top 10 Most Visually Stunning {art_forms}",
+        "Top 10 Most Beautiful {design_elements}",
+        
+        # Fashion & style
+        "Top 10 Most Iconic Fashion {moments} In History",
+        "Top 10 Most Jaw-Dropping {fashion_collections}",
+        
+        # Vehicles & transportation
+        "Top 10 Most Desirable {supercars} Ever Made",
+        "Top 10 Rarest & Most Exclusive {vehicles}",
+        
+        # Collections & artifacts
+        "Top 10 Most Precious {collections} In The World",
+        "Top 10 Rarest {treasures} Ever Discovered",
+        
+        # Paradise & escape
+        "Top 10 Most Paradise-Like {destinations}",
+        "Top 10 Most Exclusive {private_locations}"
     ]
 
     def __init__(self, use_cloud_storage: bool = True):
@@ -178,49 +280,89 @@ class TopicSelector:
             return self._get_emergency_fallback()
 
     def _generate_ai_topic(self, avoid_topics: List[str]) -> Dict[str, str]:
-        """Use Gemini AI to generate creative topic"""
+        """Use Gemini AI to generate VIRAL, unique, compelling topics with stunning imagery"""
         if not self.model:
             return None
 
         try:
             category = random.choice(self.CATEGORIES)
+            # 40% chance of visual/aspirational topics for stunning imagery
+            if random.random() < 0.4 and any(cat in category for cat in ["Luxury", "Exotic", "Opulent", "Beauty", "Fashion", "Architecture", "Art", "Supercars", "Islands", "Gourmet", "Rare", "Paradise", "Premium"]):
+                framework = random.choice(self.VISUAL_FRAMEWORKS)
+                hook_category = random.choice(["desirable", "aspirational", "visual_intrigue", "curiosity", "exclusivity"])
+            else:
+                framework = random.choice(self.VIRAL_FRAMEWORKS)
+                hook_category = random.choice(list(self.ENGAGEMENT_HOOKS.keys()))
+            hooks = self.ENGAGEMENT_HOOKS[hook_category]
 
-            prompt = f"""Generate ONE creative and engaging "Top 10" list topic for a YouTube Short video.
+            # Determine if this will be a visually-driven topic
+            is_visual_topic = any(cat in category for cat in ["Luxury", "Exotic", "Opulent", "Beauty", "Fashion", "Architecture", "Art", "Supercars", "Islands", "Gourmet", "Rare", "Paradise", "Premium"])
+
+            prompt = f"""You are a viral content strategist creating YouTube Shorts topics that get millions of views.
+Generate ONE compelling "Top 10" topic that will STOP viewers mid-scroll{' and generate STUNNING, ATTRACTIVE IMAGERY' if is_visual_topic else ''}.
 
 Category: {category}
+Framework to inspire: {framework}
+Engagement Hook Type: {hook_category} ({', '.join(hooks)})
 
-Guidelines:
-- Must be interesting, educational, and shareable
-- Focus on: beauty, culture, intellect, human values, nature, innovation
-- Examples:
-  * "Top 10 Countries with the Most Beautiful Landscapes"
-  * "Top 10 Books That Will Transform Your Thinking"
-  * "Top 10 Cities with the Friendliest People"
-  * "Top 10 Ancient Innovations Still Used Today"
-  * "Top 10 Foods That Boost Mental Clarity"
+CRITICAL REQUIREMENTS:
+1. Must trigger curiosity, contrast, or emotional response
+2. Must feel URGENT or EXCLUSIVE (rare, hidden, or forbidden knowledge)
+3. Must contain an element of surprise or revelation
+4. NO generic educational topics - be specific and compelling
+5. Must make people WANT to share it with others
+{f'''6. MUST generate VISUALLY STUNNING images - focus on:
+   - High luxury aesthetics (gold, diamonds, opulence)
+   - Breathtaking natural beauty (exotic locations, waterfalls, landscapes)
+   - Aspirational lifestyle imagery (mansions, yachts, exotic cars)
+   - Fashion/design masterpieces (runway shows, haute couture, iconic designs)
+   - Art and architectural wonders (monuments, galleries, iconic buildings)
+   - Premium materials and craftsmanship (rare collections, precious items)
+   - Paradise-like environments (exclusive islands, tropical paradises)''' if is_visual_topic else ""}
 
-AVOID these recent topics:
+Viral Topic Examples (study the pattern):
+- "Top 10 Everyday Habits You Didn't Know Were Slowly Killing You"
+- "Top 10 Billionaires' Secrets The World Isn't Ready For"
+- "Top 10 Discontinued Products That Were TOO Good (They Suppressed Them)"
+- "Top 10 Countries With Bizarre Unsolved Mysteries"
+- "Top 10 Moments When AI Freaked Scientists Out"
+{f'''- "Top 10 Most Luxurious Mansions Money Can Buy"
+- "Top 10 Most Stunning Hidden Locations On Earth"
+- "Top 10 Rarest Supercars Ever Made"
+- "Top 10 Most Breathtaking Architectural Wonders"
+- "Top 10 Dream Vacation Spots Of The Ultra-Wealthy"''' if is_visual_topic else ""}
+
+AVOID these topics (already used):
 {chr(10).join(f"- {t}" for t in avoid_topics[:10])}
 
-Return ONLY the topic title, nothing else. Make it compelling and specific.
+NOW - Generate ONE irresistible topic{' that will produce gorgeous imagery' if is_visual_topic else ''}:
+"Top 10 [SPECIFIC THING] + [Curiosity/Contrast/Urgency Hook]"
+
+Return ONLY the topic title. Be bold, specific, and slightly edge-pushing (but not offensive).
 """
 
             response = self.model.generate_content(prompt)
             topic = response.text.strip()
 
-            # Remove quotes if present
-            topic = topic.strip('"').strip("'")
+            # Clean up
+            topic = topic.strip('"').strip("'").strip()
+            
+            # Ensure quality
+            if not topic or len(topic) < 10:
+                return None
 
             # Ensure it starts with "Top 10"
             if not topic.startswith("Top 10"):
                 topic = f"Top 10 {topic}"
 
-            logger.info(f"Generated AI topic: {topic}")
+            logger.info(f"Generated VIRAL topic: {topic} (Visual: {is_visual_topic})")
 
             return {
                 "topic": topic,
                 "category": category,
-                "method": "ai_generated"
+                "method": "ai_viral_generated",
+                "hook_type": hook_category,
+                "visual_focus": is_visual_topic
             }
 
         except Exception as e:
@@ -228,42 +370,112 @@ Return ONLY the topic title, nothing else. Make it compelling and specific.
             return None
 
     def _generate_template_topic(self, avoid_topics: List[str]) -> Dict[str, str]:
-        """Generate topic using templates"""
-        logger.info("Using template-based topic generation")
+        """Generate VIRAL topics using proven engagement patterns + stunning visual topics"""
+        logger.info("Using viral framework topic generation")
 
-        # Predefined examples
-        examples = [
-            {"topic": "Top 10 Countries with the Most Beautiful Architecture", "category": "Beauty & Aesthetics"},
-            {"topic": "Top 10 Books That Changed How People Think", "category": "Intelligence & Education"},
-            {"topic": "Top 10 Cities Known for Their Kindness", "category": "Human Values & Character"},
-            {"topic": "Top 10 Natural Wonders You Must See", "category": "Nature & Geography"},
-            {"topic": "Top 10 Ancient Civilizations and Their Wisdom", "category": "History & Heritage"},
-            {"topic": "Top 10 Foods That Improve Brain Function", "category": "Wellness & Lifestyle"},
-            {"topic": "Top 10 Innovations That Transformed Daily Life", "category": "Innovation & Technology"},
-            {"topic": "Top 10 Traditional Art Forms Around the World", "category": "Arts & Creativity"},
-            {"topic": "Top 10 Countries with Rich Cultural Heritage", "category": "Culture & Traditions"},
-            {"topic": "Top 10 Places to Find Inner Peace", "category": "Wellness & Lifestyle"},
+        # Proven viral topic patterns + visually-driven topics that generate gorgeous imagery
+        viral_examples = [
+            # Debunking myths (curiosity + contrast)
+            {"topic": "Top 10 Things Everyone Believes That Are Actually Dead Wrong", "hook": "contrast", "category": "Psychology & Human Behavior", "visual": False},
+            
+            # Hidden/secret angle (curiosity)
+            {"topic": "Top 10 Secrets Billionaires Don't Want You To Know", "hook": "exclusivity", "category": "Power & Influence", "visual": False},
+            
+            # Disturbing truths (emotional + urgency)
+            {"topic": "Top 10 Everyday Things Slowly Destroying Your Health (Doctors Hate This)", "hook": "curiosity", "category": "Wellness & Lifestyle", "visual": False},
+            
+            # Plot twist angle
+            {"topic": "Top 10 Historical Events With Shocking Plot Twists Nobody Discusses", "hook": "contrast", "category": "Dark History & Secrets", "visual": False},
+            
+            # Rare/unusual (curiosity)
+            {"topic": "Top 10 Rarest Creatures Caught On Camera (You Won't Believe #7)", "hook": "weird", "category": "Rare Phenomenon & Anomalies", "visual": False},
+            
+            # Counter-culture/breaking rules
+            {"topic": "Top 10 Things Schools Won't Teach You But Should", "hook": "contrast", "category": "Controversial Truths", "visual": False},
+            
+            # Psychological insight
+            {"topic": "Top 10 Psychological Tricks That Make People Like You Instantly", "hook": "curiosity", "category": "Psychology & Human Behavior", "visual": False},
+            
+            # Transformation/before-after
+            {"topic": "Top 10 Habits That Transformed Ordinary People Into Millionaires", "hook": "emotional", "category": "Transformation Stories", "visual": False},
+            
+            # Forbidden/exclusive knowledge
+            {"topic": "Top 10 Underground Techniques Professionals Keep Secret", "hook": "exclusivity", "category": "Breaking the Rules", "visual": False},
+            
+            # Mind-blowing connections
+            {"topic": "Top 10 Unexpected Connections Between Completely Different Things", "hook": "curiosity", "category": "Unexpected Connections", "visual": False},
+            
+            # Dark/intriguing
+            {"topic": "Top 10 Unsolved Mysteries That Still Give Scientists Nightmares", "hook": "weird", "category": "Dark History & Secrets", "visual": False},
+            
+            # AI/future angle (timely + curiosity)
+            {"topic": "Top 10 Moments AI Did Something That Shouldn't Be Possible", "hook": "contrast", "category": "Scientific Mind-Blowers", "visual": False},
+            
+            # Survival/extreme stakes
+            {"topic": "Top 10 Survival Stories That Defy All Logic", "hook": "emotional", "category": "Survival & Extreme Scenarios", "visual": False},
+            
+            # Underrated/hidden gems
+            {"topic": "Top 10 Underrated Ancient Civilizations More Advanced Than We Thought", "hook": "contrast", "category": "Hidden Gems & Underrated", "visual": False},
+            
+            # Paradoxes (intellectual appeal)
+            {"topic": "Top 10 Mind-Bending Paradoxes That Break Your Brain", "hook": "curiosity", "category": "Mind-Bending Paradoxes", "visual": False},
+            
+            # ==================== VISUAL/IMAGE-FOCUSED TOPICS ====================
+            
+            # Luxury & aspirational visuals
+            {"topic": "Top 10 Most Luxurious Mansions Money Can Buy", "hook": "aspirational", "category": "Luxury Lifestyles & Aesthetics", "visual": True},
+            {"topic": "Top 10 Most Exclusive Supercars Only Billionaires Drive", "hook": "desirable", "category": "Supercars & Exotic Vehicles", "visual": True},
+            {"topic": "Top 10 Most Breathtaking Hidden Locations On Earth", "hook": "visual_intrigue", "category": "Exotic Destinations & Beauty", "visual": True},
+            {"topic": "Top 10 Most Stunning Beaches That Look Like Paradise", "hook": "desirable", "category": "Paradise Experiences", "visual": True},
+            
+            # Architectural wonders - highly visual
+            {"topic": "Top 10 Most Iconic Architectural Wonders Ever Built", "hook": "visual_intrigue", "category": "Architecture & Design Marvels", "visual": True},
+            {"topic": "Top 10 Most Beautiful Modern Buildings In The World", "hook": "desirable", "category": "Architectural Wonders", "visual": True},
+            
+            # Fashion & style - naturally visual
+            {"topic": "Top 10 Most Stunning Fashion Collections From Designer Houses", "hook": "aspirational", "category": "Fashion & Style Evolution", "visual": True},
+            {"topic": "Top 10 Most Iconic Red Carpet Moments In Fashion History", "hook": "visual_intrigue", "category": "Premium Fashion Houses", "visual": True},
+            
+            # Art & masterpieces - instantly compelling visuals
+            {"topic": "Top 10 Most Valuable Art Masterpieces That Made History", "hook": "visual_intrigue", "category": "Art & Masterpieces", "visual": True},
+            
+            # Natural beauty - breathtaking imagery
+            {"topic": "Top 10 Most Stunning Natural Wonders You Must See", "hook": "desirable", "category": "Natural Wonders & Landscapes", "visual": True},
+            {"topic": "Top 10 Most Gorgeous Waterfalls Hiding Around The World", "hook": "visual_intrigue", "category": "Hidden Gems & Underrated", "visual": True},
+            
+            # Luxury collections & rare items
+            {"topic": "Top 10 Most Precious Diamond Collections In The World", "hook": "aspirational", "category": "Rare & Precious Collections", "visual": True},
+            {"topic": "Top 10 Rarest Artifacts Ever Discovered By Archaeologists", "hook": "visual_intrigue", "category": "Rare & Precious Collections", "visual": True},
+            
+            # Exclusive experiences
+            {"topic": "Top 10 Most Exclusive Private Islands Only The Rich Can Access", "hook": "aspirational", "category": "Exclusive Islands & Hideaways", "visual": True},
+            {"topic": "Top 10 Most Lavish Yacht Experiences In The World", "hook": "desirable", "category": "Opulent & Lavish", "visual": True},
+            
+            # Gourmet & culinary (food photography is visually stunning)
+            {"topic": "Top 10 Most Luxurious Restaurants With Unreal Food Plating", "hook": "desirable", "category": "Gourmet & Culinary Delights", "visual": True},
+            {"topic": "Top 10 Most Expensive Dishes That Are Visual Masterpieces", "hook": "visual_intrigue", "category": "Gourmet & Culinary Delights", "visual": True},
         ]
 
         # Filter out recent topics
-        fresh_examples = [e for e in examples if e["topic"] not in avoid_topics]
+        fresh_examples = [e for e in viral_examples if e["topic"] not in avoid_topics]
 
         if fresh_examples:
             selected = random.choice(fresh_examples)
         else:
             # All examples were recent, pick random anyway
-            selected = random.choice(examples)
+            selected = random.choice(viral_examples)
 
-        selected["method"] = "template_generated"
-        logger.info(f"Generated template topic: {selected['topic']}")
+        selected["method"] = "viral_template_generated"
+        logger.info(f"Generated VIRAL topic: {selected['topic']} (Visual: {selected['visual']})")
         return selected
 
     def _get_emergency_fallback(self) -> Dict[str, str]:
-        """Emergency fallback topic"""
+        """Emergency fallback - still a viral topic"""
         return {
-            "topic": "Top 10 Amazing Facts About Human Nature",
-            "category": "Human Values & Character",
-            "method": "fallback"
+            "topic": "Top 10 Secrets Hidden In Plain Sight That Will Change Your Perspective",
+            "category": "Psychology & Human Behavior",
+            "method": "fallback",
+            "hook_type": "curiosity"
         }
 
 
