@@ -486,3 +486,4 @@ if __name__ == "__main__":
     topic = selector.generate_topic()
     print(f"\nGenerated Topic: {topic['topic']}")
     print(f"Category: {topic['category']}")
+    
