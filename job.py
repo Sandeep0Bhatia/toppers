@@ -4,6 +4,8 @@ Main pipeline for Toppers - AI-Powered Top 10 List Video Generator
 import os
 import json
 import logging
+import random
+import google.generativeai as genai
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -47,6 +49,88 @@ class ToppersPipeline:
             fps=int(os.getenv("FPS", 30))
         )
 
+        # Initialize Gemini model for optional AI-assisted selection of intros
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+        self.genai_model = None
+        if self.gemini_api_key:
+            try:
+                genai.configure(api_key=self.gemini_api_key)
+                self.genai_model = genai.GenerativeModel('gemini-1.5-flash')
+                logger.info("Initialized Gemini model for intro selection")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Gemini model: {e}")
+    def _generate_intro_candidates(self, topic: str, visual_focus: bool) -> list:
+        """Return a list of intro candidate strings for the given topic.
+
+        These are short (5-12s) hooks designed to precede the Top 10 countdown.
+        """
+        templates = [
+            "Stop scrolling — {topic}. Ready? In the next 60 seconds you'll see the Top 10 that will change how you think.",
+            "You won't believe this — {topic}. We're counting down the Top 10 secrets experts don't tell you. Stay until the end for the jaw-dropper.",
+            "Dream destinations and unbelievable luxury — {topic}. Watch the Top 10 most stunning visuals that people only see once in a lifetime.",
+            "These stories restore your faith — {topic}. Ten moments of courage, wonder, and surprise. Get ready to feel inspired.",
+            "Backed by research, here's {topic}. We ran the numbers — these Top 10 are the most significant you need to know.",
+            "Think you know the story? {topic}. Watch as we reveal the Top 10 with the wildest plot twists you never heard of."
+        ]
+
+        # If visual focus, prioritize aspirational/visual templates
+        candidates = []
+        for t in templates:
+            candidates.append(t.format(topic=topic))
+
+        # Add small automatic variants (shorten or add urgency)
+        variants = []
+        for c in candidates:
+            variants.append(c)
+            variants.append(c.replace("Ready? ", "Ready now? "))
+            if "watch" in c.lower():
+                variants.append(c + " Don't blink.")
+
+        # Deduplicate while preserving order
+        seen = set()
+        final = []
+        for v in variants:
+            if v not in seen:
+                seen.add(v)
+                final.append(v)
+
+        return final[:8]
+
+    def _select_best_intro(self, topic: str, candidates: list, visual_focus: bool) -> str:
+        """Select the best intro from candidates. Use AI ranking if model available, else fallback to heuristics/random.
+
+        Returns the chosen intro string.
+        """
+        if not candidates:
+            return ""
+
+        # If we have a Gemini model, ask it to choose the single best intro.
+        if self.genai_model:
+            try:
+                prompt = f"You are a viral content strategist. Given the topic: '{topic}', choose the single best short intro from the following list that will maximize hook and shares. Return ONLY the chosen intro text, verbatim, and nothing else.\n\n"
+                prompt += "\n\n".join(f"{i+1}. {c}" for i, c in enumerate(candidates))
+                prompt += "\n\nContext: The video is a YouTube Short (vertical, 60s). If the topic is visually-driven, prefer aspirational/visual hooks."
+
+                resp = self.genai_model.generate_content(prompt)
+                choice = resp.text.strip().strip('"').strip("'")
+                # Validate the choice exists in candidates (fuzzy match)
+                for c in candidates:
+                    if choice.lower() in c.lower() or c.lower() in choice.lower():
+                        return c
+                # If direct match failed, return the raw choice if it's non-empty
+                if choice:
+                    return choice
+            except Exception as e:
+                logger.warning(f"AI intro selection failed: {e}")
+
+        # Fallback heuristics: prefer visual wording if visual_focus
+        if visual_focus:
+            for c in candidates:
+                if any(k in c.lower() for k in ("stunning", "visual", "luxury", "breathtaking", "paradise", "dream")):
+                    return c
+
+        # Otherwise return a random candidate
+        return random.choice(candidates)
     def run(self):
         """Execute the complete pipeline"""
         try:
@@ -95,6 +179,12 @@ class ToppersPipeline:
             # Prepare script for narration
             script_data = content.get("script", {})
             full_script = ""
+
+            # Add preamble from researcher if available
+            if "preamble" in script_data:
+                full_script += f"{script_data['preamble']} "
+
+            # Add any hook researcher created
             if "hook" in script_data:
                 full_script += f"{script_data['hook']} "
 
@@ -179,9 +269,8 @@ def main():
     logger.info("Starting Toppers Video Generator")
 
     # Check required environment variables
+    # Only require keys that are mandatory for running the pipeline in most setups.
     required_vars = [
-        "OPENAI_API_KEY",
-        "GEMINI_API_KEY",
         "SERPER_API_KEY",
         "GCP_BUCKET_NAME"
     ]

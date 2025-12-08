@@ -52,11 +52,17 @@ create_script:
 
     Script Structure:
 
-    HOOK (First 3 seconds):
-    - Start with a shocking statement, question, or bold claim
+    PREAMBLE (First 5 seconds):
+    - Welcome viewers with authority and warmth
+    - Introduce the topic with confidence
+    - Examples: "Welcome back! Today we're counting down..." or "Get ready to discover..."
+    - Keep it brief: 1-2 sentences max (10-15 words)
+
+    HOOK (Next 3 seconds):
+    - Follow preamble with a shocking statement, question, or bold claim
     - Examples: "You won't BELIEVE #1!" or "The answer to #3 will shock you!"
 
-    COUNTDOWN (45 seconds):
+    COUNTDOWN (40 seconds):
     - Present items from #10 to #1 (reverse order for suspense)
     - For each item: Name + ONE punchy fact (5-6 seconds max)
     - Use conversational, energetic language
@@ -72,7 +78,7 @@ create_script:
     - Active voice, present tense
     - Use power words: incredible, stunning, mind-blowing, legendary
     - Add transitions: "But wait...", "Here's where it gets crazy...", "And number 1 is..."
-    - Total word count: ~140-160 words (60 seconds at conversational pace)
+    - Total word count: ~150-170 words (60 seconds at conversational pace including preamble)
 
     Research Data:
     {research_data}
@@ -81,7 +87,8 @@ create_script:
     Return a JSON object:
     {{
       "script": "Full narration script with natural pauses marked by ellipses...",
-      "hook": "The opening line",
+      "preamble": "Opening welcome/introduction (5 seconds)",
+      "hook": "The hook line after preamble",
       "items_script": [
         {{"rank": 10, "name": "Item Name", "narration": "Script for this item"}},
         ... (for all 10)
@@ -92,7 +99,7 @@ create_script:
     IMPORTANT: Return ONLY valid JSON, no additional text.
   expected_output: >
     A valid JSON object with the complete video script optimized for 60-second YouTube Shorts,
-    including hook, item-by-item narration, and CTA.
+    including preamble, hook, item-by-item narration, and CTA.
   agent: content_writer
 
 generate_image_prompts:

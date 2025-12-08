@@ -56,6 +56,24 @@ class YouTubeUploader:
         self.client_secrets_file = client_secrets_file
         self.oauth_storage_file = oauth_storage_file
         self.youtube = None
+        # If a base64-encoded OAuth JSON is provided in env, write it to the storage file.
+        try:
+            b64 = os.getenv("YOUTUBE_OAUTH_BASE64")
+            if b64:
+                import base64
+                try:
+                    data = base64.b64decode(b64)
+                    # Ensure directory exists
+                    dest_dir = os.path.dirname(os.path.abspath(self.oauth_storage_file)) or "."
+                    os.makedirs(dest_dir, exist_ok=True)
+                    with open(self.oauth_storage_file, "wb") as f:
+                        f.write(data)
+                    logger.info(f"Wrote OAuth credentials from env to {self.oauth_storage_file}")
+                except Exception as e:
+                    logger.error(f"Failed to decode/write YOUTUBE_OAUTH_BASE64: {e}")
+        except Exception:
+            # Non-fatal: continue without writing
+            pass
 
     def get_authenticated_service(self) -> any:
         """

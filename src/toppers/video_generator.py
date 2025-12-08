@@ -20,6 +20,13 @@ except ImportError:
     # MoviePy 1.x fallback
     from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip, CompositeAudioClip
 
+# Audio fade fx (may not exist in very old moviepy versions)
+try:
+    from moviepy.audio.fx.all import audio_fadein, audio_fadeout
+except Exception:
+    audio_fadein = None
+    audio_fadeout = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -277,6 +284,19 @@ class VideoGenerator:
         self.height = height
         self.fps = fps
         self.slide_generator = TopTenSlide()
+        # Background music controls (configurable via env vars)
+        try:
+            self.bg_volume = float(os.getenv("BG_MUSIC_VOLUME", "0.18"))
+        except Exception:
+            self.bg_volume = 0.18
+        try:
+            self.bg_fade_in = float(os.getenv("BG_FADE_IN", "0.5"))
+        except Exception:
+            self.bg_fade_in = 0.5
+        try:
+            self.bg_fade_out = float(os.getenv("BG_FADE_OUT", "1.0"))
+        except Exception:
+            self.bg_fade_out = 1.0
 
         logger.info(f"Initialized VideoGenerator: {width}x{height} @ {fps}fps")
 
@@ -379,17 +399,48 @@ class VideoGenerator:
 
             synthesis_input = texttospeech.SynthesisInput(text=clean_script)
 
-            # Use professional male voice
+            # TTS voice configuration can be controlled via environment variables:
+            # - TTS_VOICE_NAME (e.g. en-US-Neural2-F)
+            # - TTS_LANGUAGE_CODE (default: en-US)
+            # - TTS_SSML_GENDER (MALE/FEMALE/NEUTRAL)
+            # - TTS_SPEAKING_RATE (float)
+            # - TTS_PITCH (float)
+            # Using Google Cloud TTS Neural2-C voice for authoritative female tone
+            # en-US-Neural2-C: Professional, authoritative female voice (A is male, C is female)
+            tts_voice_name = os.getenv("TTS_VOICE_NAME", "en-US-Neural2-C")
+            tts_language = os.getenv("TTS_LANGUAGE_CODE", "en-US")
+            tts_gender = os.getenv("TTS_SSML_GENDER", "FEMALE").upper()
+            try:
+                if tts_gender == "MALE":
+                    ssml_gender = texttospeech.SsmlVoiceGender.MALE
+                elif tts_gender == "NEUTRAL":
+                    ssml_gender = texttospeech.SsmlVoiceGender.NEUTRAL
+                else:
+                    ssml_gender = texttospeech.SsmlVoiceGender.FEMALE
+            except Exception:
+                ssml_gender = texttospeech.SsmlVoiceGender.FEMALE
+
             voice = texttospeech.VoiceSelectionParams(
-                language_code="en-US",
-                name="en-US-Neural2-D",
-                ssml_gender=texttospeech.SsmlVoiceGender.MALE
+                language_code=tts_language,
+                name=tts_voice_name,
+                ssml_gender=ssml_gender
             )
+
+            # Audio tuning parameters for authoritative tone
+            # Slightly slower pace for authority, slightly lower pitch for maturity
+            try:
+                speaking_rate = float(os.getenv("TTS_SPEAKING_RATE", "0.92"))
+            except Exception:
+                speaking_rate = 0.92
+            try:
+                pitch = float(os.getenv("TTS_PITCH", "-1.5"))
+            except Exception:
+                pitch = -1.5
 
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.95,
-                pitch=-2.0
+                speaking_rate=speaking_rate,
+                pitch=pitch
             )
 
             response = client.synthesize_speech(
@@ -483,13 +534,29 @@ class VideoGenerator:
                         except AttributeError:
                             bg_music = bg_music.subclip(0, total_duration)
 
-                        # Lower background music volume to 15% so narration is clear
-                        bg_music = bg_music.volumex(0.15)
+                        # Apply configured background music volume so narration is clear
+                        bg_music = bg_music.volumex(self.bg_volume)
+
+                        # Apply fade-in/out for polish when fx available
+                        try:
+                            if audio_fadein:
+                                bg_music = bg_music.fx(audio_fadein, self.bg_fade_in)
+                            elif hasattr(bg_music, "audio_fadein"):
+                                bg_music = bg_music.audio_fadein(self.bg_fade_in)
+                        except Exception:
+                            logger.debug("Background music fade-in not applied (fx missing)")
+                        try:
+                            if audio_fadeout:
+                                bg_music = bg_music.fx(audio_fadeout, self.bg_fade_out)
+                            elif hasattr(bg_music, "audio_fadeout"):
+                                bg_music = bg_music.audio_fadeout(self.bg_fade_out)
+                        except Exception:
+                            logger.debug("Background music fade-out not applied (fx missing)")
 
                         # Mix narration with background music
                         final_audio = CompositeAudioClip([audio_clip, bg_music])
                         final_clip = self._set_audio_compat(final_clip, final_audio)
-                        logger.info("Successfully added background music at 15% volume")
+                        logger.info("Successfully added background music at 18% volume")
                     except Exception as e:
                         logger.warning(f"Failed to load background music: {e}. Using narration only.")
                         final_clip = self._set_audio_compat(final_clip, audio_clip)
@@ -515,9 +582,25 @@ class VideoGenerator:
                         except AttributeError:
                             bg_music = bg_music.subclip(0, total_duration)
 
-                        bg_music = bg_music.volumex(0.25)  # 25% volume without narration
+                        # Use configured background music volume when no narration is present
+                        bg_music = bg_music.volumex(self.bg_volume)
+                        try:
+                            if audio_fadein:
+                                bg_music = bg_music.fx(audio_fadein, self.bg_fade_in)
+                            elif hasattr(bg_music, "audio_fadein"):
+                                bg_music = bg_music.audio_fadein(self.bg_fade_in)
+                        except Exception:
+                            logger.debug("Background music fade-in not applied (fx missing)")
+                        try:
+                            if audio_fadeout:
+                                bg_music = bg_music.fx(audio_fadeout, self.bg_fade_out)
+                            elif hasattr(bg_music, "audio_fadeout"):
+                                bg_music = bg_music.audio_fadeout(self.bg_fade_out)
+                        except Exception:
+                            logger.debug("Background music fade-out not applied (fx missing)")
+
                         final_clip = self._set_audio_compat(final_clip, bg_music)
-                        logger.info("Successfully added background music at 25% volume (no narration)")
+                        logger.info(f"Successfully added background music at {self.bg_volume*100:.0f}% volume (no narration)")
                     except Exception as e:
                         logger.warning(f"Failed to add background music: {e}. Video will have no audio.")
                 else:
