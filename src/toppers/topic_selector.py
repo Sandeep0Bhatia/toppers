@@ -298,19 +298,23 @@ class TopicSelector:
             # Determine if this will be a visually-driven topic
             is_visual_topic = any(cat in category for cat in ["Luxury", "Exotic", "Opulent", "Beauty", "Fashion", "Architecture", "Art", "Supercars", "Islands", "Gourmet", "Rare", "Paradise", "Premium"])
 
-            prompt = f"""You are a viral content strategist creating YouTube Shorts topics that get millions of views.
-Generate ONE compelling "Top 10" topic that will STOP viewers mid-scroll{' and generate STUNNING, ATTRACTIVE IMAGERY' if is_visual_topic else ''}.
+            prompt = f"""You are a VIRAL CONTENT MASTERMIND creating YouTube Shorts topics that GET MILLIONS OF VIEWS and SHARES.
+Generate ONE ultra-compelling "Top 10" topic that will make viewers STOP SCROLLING INSTANTLY{' and generate STUNNING, ATTRACTIVE IMAGERY' if is_visual_topic else ''}.
 
 Category: {category}
 Framework to inspire: {framework}
 Engagement Hook Type: {hook_category} ({', '.join(hooks)})
 
-CRITICAL REQUIREMENTS:
-1. Must trigger curiosity, contrast, or emotional response
-2. Must feel URGENT or EXCLUSIVE (rare, hidden, or forbidden knowledge)
-3. Must contain an element of surprise or revelation
-4. NO generic educational topics - be specific and compelling
-5. Must make people WANT to share it with others
+CRITICAL REQUIREMENTS FOR VIRAL TOPICS:
+1. Title MUST be SHORT and PUNCHY (under 70 characters preferred)
+2. Must trigger INTENSE curiosity, shock, or FOMO
+3. Must feel URGENT, FORBIDDEN, or EXCLUSIVE knowledge
+4. Use POWER WORDS: "Shocking", "Banned", "Hidden", "Exposed", "Never", "Secret", "Forbidden"
+5. Add SPECIFIC NUMBERS or DETAILS (not generic)
+6. Create a CURIOSITY GAP - hint at shocking revelation without revealing
+7. Make it CONTROVERSIAL or COUNTER-INTUITIVE (challenge common beliefs)
+8. Target EMOTIONS: fear, desire, outrage, fascination
+9. Must be SHAREABLE - people want to show friends/family
 {f'''6. MUST generate VISUALLY STUNNING images - focus on:
    - High luxury aesthetics (gold, diamonds, opulence)
    - Breathtaking natural beauty (exotic locations, waterfalls, landscapes)
@@ -320,12 +324,15 @@ CRITICAL REQUIREMENTS:
    - Premium materials and craftsmanship (rare collections, precious items)
    - Paradise-like environments (exclusive islands, tropical paradises)''' if is_visual_topic else ""}
 
-Viral Topic Examples (study the pattern):
-- "Top 10 Everyday Habits You Didn't Know Were Slowly Killing You"
-- "Top 10 Billionaires' Secrets The World Isn't Ready For"
-- "Top 10 Discontinued Products That Were TOO Good (They Suppressed Them)"
-- "Top 10 Countries With Bizarre Unsolved Mysteries"
-- "Top 10 Moments When AI Freaked Scientists Out"
+Viral Topic Examples (STUDY THE INTENSITY):
+- "Top 10 Banned Foods That Were Too Dangerous"
+- "Top 10 Lies Your Doctor Never Told You"
+- "Top 10 Things Billionaires Hide From You"
+- "Top 10 Secrets The Government Won't Admit"
+- "Top 10 Times People Cheated Death"
+- "Top 10 Creepy Things Found In The Ocean"
+- "Top 10 Scams Everyone Falls For"
+- "Top 10 Dark Secrets Behind Disney"
 {f'''- "Top 10 Most Luxurious Mansions Money Can Buy"
 - "Top 10 Most Stunning Hidden Locations On Earth"
 - "Top 10 Rarest Supercars Ever Made"
@@ -373,52 +380,40 @@ Return ONLY the topic title. Be bold, specific, and slightly edge-pushing (but n
         """Generate VIRAL topics using proven engagement patterns + stunning visual topics"""
         logger.info("Using viral framework topic generation")
 
-        # Proven viral topic patterns + visually-driven topics that generate gorgeous imagery
+        # ULTRA-VIRAL topic patterns designed for maximum engagement
         viral_examples = [
-            # Debunking myths (curiosity + contrast)
-            {"topic": "Top 10 Things Everyone Believes That Are Actually Dead Wrong", "hook": "contrast", "category": "Psychology & Human Behavior", "visual": False},
-            
-            # Hidden/secret angle (curiosity)
-            {"topic": "Top 10 Secrets Billionaires Don't Want You To Know", "hook": "exclusivity", "category": "Power & Influence", "visual": False},
-            
-            # Disturbing truths (emotional + urgency)
-            {"topic": "Top 10 Everyday Things Slowly Destroying Your Health (Doctors Hate This)", "hook": "curiosity", "category": "Wellness & Lifestyle", "visual": False},
-            
-            # Plot twist angle
-            {"topic": "Top 10 Historical Events With Shocking Plot Twists Nobody Discusses", "hook": "contrast", "category": "Dark History & Secrets", "visual": False},
-            
-            # Rare/unusual (curiosity)
-            {"topic": "Top 10 Rarest Creatures Caught On Camera (You Won't Believe #7)", "hook": "weird", "category": "Rare Phenomenon & Anomalies", "visual": False},
-            
-            # Counter-culture/breaking rules
-            {"topic": "Top 10 Things Schools Won't Teach You But Should", "hook": "contrast", "category": "Controversial Truths", "visual": False},
-            
-            # Psychological insight
-            {"topic": "Top 10 Psychological Tricks That Make People Like You Instantly", "hook": "curiosity", "category": "Psychology & Human Behavior", "visual": False},
-            
-            # Transformation/before-after
-            {"topic": "Top 10 Habits That Transformed Ordinary People Into Millionaires", "hook": "emotional", "category": "Transformation Stories", "visual": False},
-            
-            # Forbidden/exclusive knowledge
-            {"topic": "Top 10 Underground Techniques Professionals Keep Secret", "hook": "exclusivity", "category": "Breaking the Rules", "visual": False},
-            
-            # Mind-blowing connections
-            {"topic": "Top 10 Unexpected Connections Between Completely Different Things", "hook": "curiosity", "category": "Unexpected Connections", "visual": False},
-            
-            # Dark/intriguing
-            {"topic": "Top 10 Unsolved Mysteries That Still Give Scientists Nightmares", "hook": "weird", "category": "Dark History & Secrets", "visual": False},
-            
-            # AI/future angle (timely + curiosity)
-            {"topic": "Top 10 Moments AI Did Something That Shouldn't Be Possible", "hook": "contrast", "category": "Scientific Mind-Blowers", "visual": False},
-            
-            # Survival/extreme stakes
-            {"topic": "Top 10 Survival Stories That Defy All Logic", "hook": "emotional", "category": "Survival & Extreme Scenarios", "visual": False},
-            
-            # Underrated/hidden gems
-            {"topic": "Top 10 Underrated Ancient Civilizations More Advanced Than We Thought", "hook": "contrast", "category": "Hidden Gems & Underrated", "visual": False},
-            
-            # Paradoxes (intellectual appeal)
-            {"topic": "Top 10 Mind-Bending Paradoxes That Break Your Brain", "hook": "curiosity", "category": "Mind-Bending Paradoxes", "visual": False},
+            # Shocking secrets & lies (HIGH INTENSITY)
+            {"topic": "Top 10 Lies Your Doctor Never Told You", "hook": "contrast", "category": "Controversial Truths", "visual": False},
+            {"topic": "Top 10 Dark Secrets Behind Famous Brands", "hook": "curiosity", "category": "Dark History & Secrets", "visual": False},
+            {"topic": "Top 10 Things Billionaires Hide From You", "hook": "exclusivity", "category": "Power & Influence", "visual": False},
+            {"topic": "Top 10 Scams Everyone Falls For", "hook": "urgency", "category": "Psychology & Human Behavior", "visual": False},
+
+            # Banned/forbidden content (CURIOSITY SPIKE)
+            {"topic": "Top 10 Banned Foods That Were Too Dangerous", "hook": "exclusivity", "category": "Dark History & Secrets", "visual": False},
+            {"topic": "Top 10 Experiments Science Won't Repeat", "hook": "weird", "category": "Scientific Mind-Blowers", "visual": False},
+            {"topic": "Top 10 Places You're Forbidden To Visit", "hook": "exclusivity", "category": "Rare Phenomenon & Anomalies", "visual": False},
+
+            # Death/survival (INTENSE EMOTION)
+            {"topic": "Top 10 Times People Cheated Death", "hook": "emotional", "category": "Survival & Extreme Scenarios", "visual": False},
+            {"topic": "Top 10 Last Words That Will Haunt You", "hook": "weird", "category": "Dark History & Secrets", "visual": False},
+            {"topic": "Top 10 Near-Death Experiences That Changed Everything", "hook": "emotional", "category": "Transformation Stories", "visual": False},
+
+            # Creepy/unsettling (VIRAL HORROR)
+            {"topic": "Top 10 Creepy Things Found In The Ocean", "hook": "weird", "category": "Rare Phenomenon & Anomalies", "visual": False},
+            {"topic": "Top 10 Disturbing Facts About Space", "hook": "weird", "category": "Scientific Mind-Blowers", "visual": False},
+            {"topic": "Top 10 Unsolved Disappearances That Defy Logic", "hook": "weird", "category": "Dark History & Secrets", "visual": False},
+
+            # Money/wealth secrets (ASPIRATION)
+            {"topic": "Top 10 Side Hustles That Made Millionaires", "hook": "emotional", "category": "Transformation Stories", "visual": False},
+            {"topic": "Top 10 Investment Secrets The Rich Won't Share", "hook": "exclusivity", "category": "Power & Influence", "visual": False},
+
+            # Psychology/manipulation (POWER)
+            {"topic": "Top 10 Mind Tricks That Control People", "hook": "curiosity", "category": "Psychology & Human Behavior", "visual": False},
+            {"topic": "Top 10 Ways You're Being Manipulated Daily", "hook": "urgency", "category": "Controversial Truths", "visual": False},
+
+            # AI/tech fears (TIMELY)
+            {"topic": "Top 10 Times AI Scared Scientists", "hook": "weird", "category": "Scientific Mind-Blowers", "visual": False},
+            {"topic": "Top 10 Tech Secrets Companies Don't Want Out", "hook": "exclusivity", "category": "Breaking the Rules", "visual": False},
             
             # ==================== VISUAL/IMAGE-FOCUSED TOPICS ====================
             

@@ -48,43 +48,125 @@ class ImageGenerator:
 
         logger.info(f"Initialized ImageGenerator with provider: {self.provider}")
 
+    def _is_text_image(self, image_path: Path) -> bool:
+        """
+        Check if generated image is just text (common failure mode).
+        Uses simple heuristic: if image has very few colors, likely text.
+        """
+        try:
+            from PIL import Image
+            img = Image.open(image_path)
+
+            # Convert to RGB if needed
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            # Get unique colors (sample for performance)
+            img_small = img.resize((100, 100))
+            colors = img_small.getcolors(maxcolors=10000)
+
+            if colors:
+                unique_colors = len(colors)
+                # Text images typically have very few colors (< 50)
+                # Real photos have hundreds/thousands
+                if unique_colors < 50:
+                    logger.warning(f"Image appears to be text-only ({unique_colors} colors)")
+                    return True
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Failed to validate image: {e}")
+            return False
+
     def generate_image(
         self,
         prompt: str,
         output_path: Path,
         width: int = 1080,
-        height: int = 1920
+        height: int = 1920,
+        max_retries: int = 3
     ) -> Path:
         """
-        Generate an image from a prompt and save it.
+        Generate an image from a prompt and save it with retry logic.
 
         Args:
             prompt: Text prompt for image generation
             output_path: Path to save the generated image
             width: Image width
             height: Image height
+            max_retries: Maximum retry attempts if image is text-only
 
         Returns:
             Path to the saved image
         """
         logger.info(f"Generating image with {self.provider}: {prompt[:100]}...")
 
-        try:
-            if self.provider == "dalle":
-                return self._generate_dalle(prompt, output_path)
-            elif self.provider == "stability":
-                return self._generate_stability(prompt, output_path, width, height)
-            elif self.provider == "replicate":
-                return self._generate_replicate(prompt, output_path, width, height)
-            elif self.provider == "gemini":
-                return self._generate_gemini(prompt, output_path)
-            else:
-                raise ValueError(f"Unknown provider: {self.provider}")
+        for attempt in range(max_retries):
+            try:
+                # Simplify prompt on retries to avoid text generation
+                current_prompt = prompt
+                if attempt > 0:
+                    # On retry, use even simpler prompt focusing on visual subject
+                    # Remove any references to text, names, or specific details
+                    current_prompt = self._simplify_prompt_for_retry(prompt, attempt)
+                    logger.info(f"Retry {attempt + 1}/{max_retries} with simplified prompt: {current_prompt[:80]}...")
 
-        except Exception as e:
-            logger.error(f"Image generation failed: {e}")
-            # Create a fallback placeholder
-            return self._create_placeholder(output_path, prompt)
+                if self.provider == "dalle":
+                    result_path = self._generate_dalle(current_prompt, output_path)
+                elif self.provider == "stability":
+                    result_path = self._generate_stability(current_prompt, output_path, width, height)
+                elif self.provider == "replicate":
+                    result_path = self._generate_replicate(current_prompt, output_path, width, height)
+                elif self.provider == "gemini":
+                    result_path = self._generate_gemini(current_prompt, output_path)
+                else:
+                    raise ValueError(f"Unknown provider: {self.provider}")
+
+                # Validate the generated image
+                if self._is_text_image(result_path):
+                    logger.warning(f"Generated image appears to be text-only, retrying... (attempt {attempt + 1}/{max_retries})")
+                    if attempt < max_retries - 1:
+                        continue  # Try again
+                    else:
+                        logger.error("All retries exhausted, image still appears text-only")
+
+                # Image is good!
+                return result_path
+
+            except Exception as e:
+                logger.error(f"Image generation failed (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    continue  # Try again
+                else:
+                    # Final attempt failed, create placeholder
+                    logger.error("All retries exhausted, creating placeholder")
+                    return self._create_placeholder(output_path, prompt)
+
+        # Should not reach here, but just in case
+        return self._create_placeholder(output_path, prompt)
+
+    def _simplify_prompt_for_retry(self, original_prompt: str, attempt: int) -> str:
+        """
+        Simplify prompt on retry to avoid text generation.
+        Removes specific names, dates, text references.
+        """
+        # Remove common text-triggering words
+        text_keywords = ['text', 'words', 'sign', 'poster', 'newspaper', 'magazine',
+                         'headline', 'caption', 'writing', 'letter', 'document']
+
+        simplified = original_prompt.lower()
+        for keyword in text_keywords:
+            simplified = simplified.replace(keyword, '')
+
+        # Extract main subject (usually first few words)
+        words = simplified.split()
+        # Take first 3-5 words depending on attempt
+        keep_words = max(3, 6 - attempt)
+        simplified = ' '.join(words[:keep_words])
+
+        # Add generic visual instruction
+        return f"{simplified} photograph realistic scene"
 
     def _generate_dalle(self, prompt: str, output_path: Path) -> Path:
         """Generate image using DALL-E 3"""
